@@ -10,40 +10,48 @@ import com.swmansion.rnscreens.ScreenViewManager
 
 @ReactModule(name = ScreenViewManager.REACT_CLASS)
 class ScreenViewManager : ViewGroupManager<Screen>() {
-  override fun getName(): String {
-    return REACT_CLASS
+  companion object {
+    const val REACT_CLASS = "RNSScreen"
   }
 
-  override fun createViewInstance(reactContext: ThemedReactContext): Screen {
-    return Screen(reactContext)
-  }
+  override fun getName(): String =
+    REACT_CLASS
 
-  @ReactProp(name = "active", defaultFloat = 0)
+  override fun createViewInstance(reactContext: ThemedReactContext) =
+    Screen(reactContext)
+
+  @ReactProp(name = "active", defaultFloat = 0f)
   fun setActive(view: Screen, active: Float) {
     view.isActive = active != 0f
   }
 
   @ReactProp(name = "stackPresentation")
   fun setStackPresentation(view: Screen, presentation: String) {
-    if ("push" == presentation) {
-      view.stackPresentation = Screen.StackPresentation.PUSH
-    } else if ("modal" == presentation || "containedModal" == presentation || "fullScreenModal" == presentation || "formSheet" == presentation) { // at the moment Android implementation does not handle contained vs regular modals
-      view.stackPresentation = Screen.StackPresentation.MODAL
-    } else if ("transparentModal" == presentation || "containedTransparentModal" == presentation) { // at the moment Android implementation does not handle contained vs regular modals
-      view.stackPresentation = Screen.StackPresentation.TRANSPARENT_MODAL
-    } else {
-      throw JSApplicationIllegalArgumentException("Unknown presentation type $presentation")
-    }
+    view.stackPresentation =
+      when (presentation) {
+        "push" -> Screen.StackPresentation.PUSH
+
+        // at the moment Android implementation does not handle contained vs regular modals
+        "modal", "containedModal", "fullScreenModal", "formSheet" -> Screen.StackPresentation.MODAL
+
+        // at the moment Android implementation does not handle contained vs regular modals
+        "transparentModal", "containedTransparentModal" -> Screen.StackPresentation.TRANSPARENT_MODAL
+
+        else -> throw JSApplicationIllegalArgumentException("Unknown presentation type $presentation")
+      }
   }
 
   @ReactProp(name = "stackAnimation")
   fun setStackAnimation(view: Screen, animation: String?) {
-    if (animation == null || "default" == animation) {
-      view.stackAnimation = Screen.StackAnimation.DEFAULT
-    } else if ("none" == animation) {
-      view.stackAnimation = Screen.StackAnimation.NONE
-    } else if ("fade" == animation) {
-      view.stackAnimation = Screen.StackAnimation.FADE
+    when (animation) {
+      null, "default" ->
+        view.stackAnimation = Screen.StackAnimation.DEFAULT
+
+      "none" ->
+        view.stackAnimation = Screen.StackAnimation.NONE
+
+      "fade" ->
+        view.stackAnimation = Screen.StackAnimation.FADE
     }
   }
 
@@ -52,17 +60,10 @@ class ScreenViewManager : ViewGroupManager<Screen>() {
     view.isGestureEnabled = gestureEnabled
   }
 
-  override fun getExportedCustomDirectEventTypeConstants(): MutableMap<String, Any>? {
-    return MapBuilder.of<String, Map<String, String>>(
-            ScreenDismissedEvent.EVENT_NAME,
-            MapBuilder.of("registrationName", "onDismissed"),
-            ScreenAppearEvent.EVENT_NAME,
-            MapBuilder.of("registrationName", "onAppear"),
-            StackFinishTransitioningEvent.EVENT_NAME,
-            MapBuilder.of("registrationName", "onFinishTransitioning"))
-  }
-
-  companion object {
-    const val REACT_CLASS = "RNSScreen"
-  }
+  override fun getExportedCustomDirectEventTypeConstants(): MutableMap<String, Any> =
+    mutableMapOf(
+            ScreenDismissedEvent.EVENT_NAME to mapOf("registrationName" to "onDismissed"),
+            ScreenAppearEvent.EVENT_NAME to mapOf("registrationName" to "onAppear"),
+            StackFinishTransitioningEvent.EVENT_NAME to mapOf("registrationName" to "onFinishTransitioning")
+    )
 }
